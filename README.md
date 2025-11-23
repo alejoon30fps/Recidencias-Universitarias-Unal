@@ -23,6 +23,12 @@ El sistema permite registrar estudiantes, consultarlos por ID, modificar datos, 
   - Listas (ArrayList) → almacenamiento de resultados  
 
 ---
+Bocetos del MVP (Mockups)
+
+Los wireframes de la interfaz de usuario se encuentran disponibles en la carpeta `/docs` del repositorio.
+
+- **Vista 1:** Administración (Registro y Asignación)
+- **Vista 2:** Consulta de Estudiante
 
 ## Instrucciones de Instalación y Ejecución
 
