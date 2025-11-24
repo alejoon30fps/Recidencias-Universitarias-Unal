@@ -1,3 +1,5 @@
+import javax.swing.*;
+import java.awt.*;
 public class PanelEstudiante extends JPanel {
 
     private JTextField txtIDConsulta;
