@@ -1,8 +1,9 @@
-public class Estudiante implements Comparable<Estudiante> {
+public class Estudiante implements Comparable<Estudiante>,getAndStIdHeap<Estudiante>{
     private int pbm;
     private String nombre;
     private String correo;
     private long id;
+    private int indexHeap;
 
     public Estudiante(String nombre, int pbm, String correo) {
         this.pbm = pbm;
@@ -44,6 +45,14 @@ public class Estudiante implements Comparable<Estudiante> {
         this.id = id;
     }
 
+    @Override
+    public void setIndexHeap(int indexHeap){
+        this.indexHeap=indexHeap;
+    }
+    @Override
+    public int getIndexHeap(){
+        return indexHeap;
+    }
     @Override
     public int compareTo(Estudiante otro) {
         return Integer.compare(this.pbm, otro.pbm);

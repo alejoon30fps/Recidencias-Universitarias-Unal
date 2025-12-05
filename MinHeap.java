@@ -1,8 +1,7 @@
-public class MinHeap<T extends Comparable<T>> {
-
+public class MinHeap<T extends Comparable<T> & getAndStIdHeap<T>> {
     private Object[] heap;
     private int size;
-    private int capacity=10;
+    private int capacity=16;
 
     public MinHeap(int capacity) {
         this.capacity = capacity;
@@ -26,6 +25,7 @@ public class MinHeap<T extends Comparable<T>> {
     public void insert(T valor) {
         if (size == capacity) resize();      
         heap[size] = valor;
+        valor.setIndexHeap(size);
         siftUp(size);
         size++;
     }
@@ -41,7 +41,7 @@ public class MinHeap<T extends Comparable<T>> {
     }
 
     public boolean remove(T valor) {
-        int idx = indexOf(valor);
+        int idx = valor.getIndexHeap();
         if (idx == -1) return false;
 
         heap[idx] = heap[size - 1];
@@ -53,16 +53,9 @@ public class MinHeap<T extends Comparable<T>> {
         return true;
     }
 
-    private int indexOf(T valor) {
-        for (int i = 0; i < size; i++) {
-            if (get(i).compareTo(valor) == 0) return i;
-        }
-        return -1;
-    }
-
     public boolean changeKey(T viejo, T nuevo) {
         
-        int idx = indexOf(viejo);
+        int idx = viejo.getIndexHeap();
         if (idx == -1) return false;
 
         heap[idx] = nuevo;
@@ -83,6 +76,7 @@ public class MinHeap<T extends Comparable<T>> {
             if (child.compareTo(par) >= 0) break;
 
             swap(idx, parent);
+            
             idx = parent;
         }
     }
@@ -104,9 +98,18 @@ public class MinHeap<T extends Comparable<T>> {
     }
 
     private void swap(int a, int b) {
+        T temp1,temp2;
+
+        temp1= get(a);
+        temp2=get(b);
+
+        temp1.setIndexHeap(b);
+        temp2.setIndexHeap(a);
+        
         Object temp = heap[a];
         heap[a] = heap[b];
         heap[b] = temp;
+
     }
 
     private void resize() {
