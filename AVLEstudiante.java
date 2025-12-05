@@ -1,19 +1,6 @@
 public class AVLEstudiante {
     private Nodo raiz;
-
-    public static void main(String[] args) {
-
-    AVLEstudiante arbol = new AVLEstudiante();
-
-    arbol.insertar(new Estudiante("Ana", 30, "ana@mail.com"));
-    arbol.insertar(new Estudiante("Luis", 10, "luis@mail.com"));
-    arbol.insertar(new Estudiante("Pedro", 50, "pedro@mail.com"));
-    arbol.insertar(new Estudiante("Maria", 5, "maria@mail.com"));
-    arbol.insertar(new Estudiante("pepa", 40, "pepig@mail.com"));
-    arbol.insertar(new Estudiante("Carlos", 40, "carlos@mail.com"));
-    }
-
-
+    
     // Clase Interna Nodo
     class Nodo {
         Estudiante estudiante;
