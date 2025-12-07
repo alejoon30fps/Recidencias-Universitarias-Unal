@@ -89,54 +89,58 @@ public class AVLEstudiante {
     // Operación de Borrar 
     // ----------------------------------------------------------------------
     
-    public void remove(Estudiante estudiante) {
-        raiz = eliminar(raiz, estudiante);
-    }
 
-    private Nodo eliminar(Nodo nodo, Estudiante estudiante) {
-        if (nodo == null) {
-            return null;
-    }
-    // variable comparable 
-    int cmp = estudiante.compareTo(nodo.estudiante);
+public boolean remove(Estudiante estudiante) {
+    boolean[] eliminado = new boolean[]{false};
+    raiz = eliminar(raiz, estudiante, eliminado);
+    return eliminado[0];
+}
 
-    // 1. Buscar el nodo a eliminar
-    if (cmp < 0) {
-        nodo.izquierdo = eliminar(nodo.izquierdo, estudiante);
-    } else if (cmp > 0) {
-        nodo.derecho = eliminar(nodo.derecho, estudiante);
-    } else {
+private Nodo eliminar(Nodo nodo, Estudiante estudiante, boolean[] eliminado) {
 
-        //         CASO 1: Nodo hoja o con un solo hijo 
-        if (nodo.izquierdo == null || nodo.derecho == null) {
-            Nodo temp = (nodo.izquierdo != null) ? nodo.izquierdo : nodo.derecho;
-
-            // Caso: sin hijos
-            if (temp == null) {
-                return null;
-            }
-
-            // Caso: un hijo
-            nodo = temp;
-        } else {
-
-            //         CASO 2: Nodo con dos hijos 
-            Nodo sucesor = minValueNode(nodo.derecho);
-            nodo.estudiante = sucesor.estudiante;
-            nodo.derecho = eliminar(nodo.derecho, sucesor.estudiante);
-        }
-    }
-
-    // Si quedó vacío tras borrar
     if (nodo == null) {
         return null;
     }
 
-    //       Recalcular altura 
+    int cmp = estudiante.compareTo(nodo.estudiante);
+
+    // 1. Buscar el nodo a eliminar
+    if (cmp < 0) {
+        nodo.izquierdo = eliminar(nodo.izquierdo, estudiante, eliminado);
+
+    } else if (cmp > 0) {
+        nodo.derecho = eliminar(nodo.derecho, estudiante, eliminado);
+
+    } else {
+        // Nodo encontrado
+        eliminado[0] = true;
+
+        // Caso 1: nodo con 0 o 1 hijo
+        if (nodo.izquierdo == null || nodo.derecho == null) {
+            Nodo temp = (nodo.izquierdo != null) ? nodo.izquierdo : nodo.derecho;
+
+            // Sin hijos
+            if (temp == null) {
+                return null;
+            }
+
+            // Un hijo
+            nodo = temp;
+
+        } else {
+            // Caso 2: nodo con dos hijos
+            Nodo sucesor = minValueNode(nodo.derecho);
+            nodo.estudiante = sucesor.estudiante;
+            nodo.derecho = eliminar(nodo.derecho, sucesor.estudiante, eliminado);
+        }
+    }
+
+    // Recalcular altura
     actualizarAltura(nodo);
 
-    //         Rebalanceo 
+    // Rebalanceo
     int fb = getFactorBalanceo(nodo);
+
     // LL
     if (fb > 1 && getFactorBalanceo(nodo.izquierdo) >= 0) {
         return rotarDerecha(nodo);
@@ -164,7 +168,6 @@ public class AVLEstudiante {
 
 /**
  * Devuelve el nodo con el valor mínimo del subárbol.
- * Es un metodo auxiliar para el metodo de delete
  */
 private Nodo minValueNode(Nodo nodo) {
     Nodo actual = nodo;
@@ -173,6 +176,7 @@ private Nodo minValueNode(Nodo nodo) {
     }
     return actual;
 }
+
     
     // ----------------------------------------------------------------------
     // Operación de Búsqueda (Modificada)
@@ -292,6 +296,18 @@ private Nodo minValueNode(Nodo nodo) {
     insertar(nuevo);
 
     return true;
+}
+
+    public void printInOrder() {
+    printInOrder(raiz);
+    System.out.println();
+}
+
+private void printInOrder(Nodo nodo) {
+    if (nodo == null) return;
+    printInOrder(nodo.izquierdo);
+    System.out.print(nodo.estudiante.getPbm() + " ");
+    printInOrder(nodo.derecho);
 }
 
 
