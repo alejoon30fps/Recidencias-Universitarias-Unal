@@ -1,18 +1,20 @@
+import java.util.LinkedList;
+
 public class UniversalHashTable<T> {
 
     // --- Parámetros para Hashing Universal ---
     // Estos valores definen la función hash utilizada y deben elegirse
     // para garantizar una baja probabilidad de colisión (hashing universal).
-    private final long a = 1234567L;          // Constante 'a' fija (como si fuera seleccionada aleatoriamente al inicio)
-    private final long b = 891011L;           // Constante 'b' fija (como si fuera seleccionada aleatoriamente al inicio)
-    private final long p = 1_000_000_007L;    // Número primo grande, debe ser mayor que el rango de las posibles claves de entrada.
+    private final long a = (long)1234567;          // Constante 'a' fija (como si fuera seleccionada aleatoriamente al inicio)
+    private final long b = (long)891011;           // Constante 'b' fija (como si fuera seleccionada aleatoriamente al inicio)
+    private final long p = (long)1_000_000_007;    // Número primo grande, debe ser mayor que el rango de las posibles claves de entrada.
 
     // --- Atributos de la Tabla ---
     private int m = 16;                       // Tamaño inicial de la tabla (capacidad). Se duplica en cada rehash.
     private int size = 0;                     // Cantidad actual de elementos almacenados en la tabla.
     private final float loadFactorLimit =(float) 0.75; // Límite que, si se alcanza, dispara el proceso de rehash.
 
-    private Object[] table;                   // El array subyacente que almacena los elementos.
+    private LinkedList<T>[] table;                   // El array de listas enlazadas para manejar colisiones. (Separate Chaining)
 
     // ----------------------------------------------------------------------
 
@@ -20,8 +22,12 @@ public class UniversalHashTable<T> {
      * Constructor de la tabla de hash.
      * Inicializa el array de almacenamiento con la capacidad inicial 'm'.
      */
+    @SuppressWarnings("unchecked")
     public UniversalHashTable() { 
-        table = new Object[m];
+        table = new LinkedList[m];
+        for (int i = 0; i < m; i++) {
+            table[i] = new LinkedList<>();
+        }
     }
 
     // ----------------------------------------------------------------------
@@ -54,23 +60,27 @@ public class UniversalHashTable<T> {
      * Duplica la capacidad de la tabla cuando el factor de carga es demasiado alto 
      * y reubica todos los elementos en la nueva tabla usando la nueva función hash.
      */
+    @SuppressWarnings("unchecked")
     private void rehash() { 
         // Guarda la referencia a la tabla antigua antes de redimensionar.
-        Object[] old = table;
+        LinkedList<T>[] old = table;
 
         // 1. Duplica el tamaño de la capacidad de la tabla (m).
         m = m * 2;
         // 2. Crea el nuevo array con el doble de capacidad.
-        table = new Object[m];
+        table = new LinkedList[m];
+        for (int i = 0; i < m; i++) {
+            table[i] = new LinkedList<>();
+        }
         // 3. Reinicia el contador de elementos. Se incrementará en el bucle al reinsertar.
         size = 0;
 
         // 4. Itera sobre la tabla antigua para reinsertar todos los elementos.
-        for (int i = 0; i < old.length; i++) {
+        for (LinkedList<T> list : old) {
             // Solo procesa las celdas que contienen un elemento (no nulas).
-            if (old[i] != null) {
-                @SuppressWarnings("unchecked")
-                T value = (T) old[i];
+            if (list != null) {
+                //Recorre cada elemento en la lista enlazada.
+                for (T value : list) {
                 
                 // La clave (key) utilizada es el código hash del objeto.
                 int key = value.hashCode();
@@ -79,6 +89,7 @@ public class UniversalHashTable<T> {
                 // el nuevo valor de 'm' en la función hash, ubicándolo correctamente 
                 // en la nueva y más grande tabla.
                 insert(key, value);
+                }
             }
         }
     }
@@ -105,8 +116,7 @@ public class UniversalHashTable<T> {
         // Almacena el valor. 
         // NOTA: Esta implementación usa un método simple de sondeo que no maneja colisiones 
         // eficazmente (el nuevo valor simplemente reemplaza al que existía en ese índice).
-        table[idx] = value;
-        
+        table[idx].add(value);
         // Incrementa el contador de elementos almacenados.
         size++;
     }
@@ -117,16 +127,23 @@ public class UniversalHashTable<T> {
      * Recupera un elemento de la tabla usando su clave hash.
      * * @param key El código hash del elemento a buscar.
      * @return El valor T asociado a la clave, o null si la posición está vacía.
-     */
-    @SuppressWarnings("unchecked")
+     */    
     public T get(int key) {
         // Calcula el índice del elemento.
         int idx = hash(key);
-        
+        LinkedList<T> list = table[idx];
+        // Si la lista está vacía, devuelve null.
+        if (list == null) return null;
+
+        for (T value : list) {
+            if (value.hashCode() == key) {
+                return value;
+            }
+        }
         // Devuelve el elemento en esa posición, haciendo un casting.
         // NOTA: Debido a la falta de manejo de colisiones, este método solo funciona 
         // correctamente si el elemento se encuentra exactamente en el índice calculado.
-        return (T) table[idx];
+        return null;
     }
 
     // ----------------------------------------------------------------------
@@ -148,4 +165,28 @@ public class UniversalHashTable<T> {
     public int capacity() {
         return m;
     }
+
+    public boolean remove(long id) {
+    int key = Long.valueOf(id).hashCode();
+    int idx = hash(key);
+
+    LinkedList<T> list = table[idx];
+    if (list == null) return false; // no hay nada para eliminar
+
+    for (T value : list) {
+        if (value.hashCode() == key) {
+            list.remove(value);
+            size--;
+            return true;  // eliminación exitosa
+        }
+    }
+        return false; // no había nada para eliminar
+    
+    }
+
+    public LinkedList<T>[] getTable() {
+        return table;
+    }
+
+
 }
