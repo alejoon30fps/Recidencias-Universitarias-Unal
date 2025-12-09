@@ -4,7 +4,7 @@ public class AVLEstudiante {
     private Nodo raiz;
     
     // Clase Interna Nodo
-    class Nodo {
+    public class Nodo {
         Estudiante estudiante;
         // int clave; // ¡Eliminado! Usaremos estudiante.compareTo()
         Nodo izquierdo;
@@ -34,6 +34,11 @@ public class AVLEstudiante {
         
         // Retorna la diferencia de altura, usando el método altura() para obtener 0 si el hijo es null.
         return altura(nodo.izquierdo) - altura(nodo.derecho);
+    }
+
+    // Retornar la raíz del AVL (para pruebas o recorridos externos)
+    public Nodo getRoot() {
+        return raiz;
     }
 
     public void insertar(Estudiante estudiante) {
@@ -92,17 +97,17 @@ public class AVLEstudiante {
     // ----------------------------------------------------------------------
     
 
-public boolean remove(Estudiante estudiante) {
-    boolean[] eliminado = new boolean[]{false};
-    raiz = eliminar(raiz, estudiante, eliminado);
-    return eliminado[0];
-}
-
-private Nodo eliminar(Nodo nodo, Estudiante estudiante, boolean[] eliminado) {
-
-    if (nodo == null) {
-        return null;
+    public boolean remove(Estudiante estudiante) {
+        boolean[] eliminado = new boolean[]{false};
+        raiz = eliminar(raiz, estudiante, eliminado);
+        return eliminado[0];
     }
+
+    private Nodo eliminar(Nodo nodo, Estudiante estudiante, boolean[] eliminado) {
+
+        if (nodo == null) {
+            return null;
+        }
 
     int cmp = estudiante.compareTo(nodo.estudiante);
 
@@ -280,7 +285,39 @@ private Nodo minValueNode(Nodo nodo) {
         return (nodo == null) ? 0 : nodo.altura;
     }
 
+    /**
+     * Obtiene la cantidad de nodos que se tienen.
+     */
+    public int totalNodos() {
+        return totalNodos(raiz);
+    }
 
+    private int totalNodos(Nodo nodo) {
+        if (nodo == null) {
+            return 0;
+        }
+        return 1 + totalNodos(nodo.izquierdo) + totalNodos(nodo.derecho);
+    }
+
+    /**
+     * Obtenemos el Estudiante en la posición 'index' del recorrido In-Order.
+     * @param index Índice (0-based) en el recorrido In-Order.
+     */
+    public Estudiante getByIndexInOrder(int index){
+    return getByIndexInOrder(raiz, new int[]{index});
+    }
+
+    private Estudiante getByIndexInOrder(Nodo nodo, int[] index){
+    if (nodo == null) return null;
+
+    Estudiante left = getByIndexInOrder(nodo.izquierdo, index);
+    if (left != null) return left;
+
+    if (index[0] == 0) return nodo.estudiante;
+    index[0]--;
+
+    return getByIndexInOrder(nodo.derecho, index);
+    }
     // ----------------------------------------------------------------------
     // Operación de camnbiar el Valor de un nodo (Implicita cuando se cambia el valor en las demas estructuras)
     // ----------------------------------------------------------------------
@@ -314,27 +351,34 @@ private Nodo minValueNode(Nodo nodo) {
         printInOrder(nodo.derecho);
     }
 
+    @SuppressWarnings("rawtypes")
     public String[] listaInOrder(UniversalHashTable aceptados) {
-        // Inicializa el array de dos posiciones: [0] = Aceptados, [1] = No Aceptados
-        String[] listaCompleta = {"", ""}; 
-        
-        // Inicia el recorrido recursivo
-        recorrerListaInOrder(raiz, aceptados, listaCompleta);
-        
-        return listaCompleta;
-    }
+
+    // Usamos StringBuilder para eficiencia
+    StringBuilder aceptadosSB = new StringBuilder();
+    StringBuilder noAceptadosSB = new StringBuilder();
+
+    // Iniciar el recorrido
+    listaInOrderRec(raiz, aceptados, aceptadosSB, noAceptadosSB);
+
+    // Convertimos a String final SIN concatenación pesada
+    return new String[] {
+        aceptadosSB.toString(),
+        noAceptadosSB.toString()
+    };
+}
 
 /**
  * Método recursivo para recorrer el AVL In-Order (Izquierda-Nodo-Derecha)
  * y clasificar los estudiantes en dos listas.
  */
-    private void recorrerListaInOrder(Nodo nodo, UniversalHashTable aceptados, String[] listaCompleta) {
-        if (nodo == null) {
-            return;
-        }
+    @SuppressWarnings("rawtypes")
+    private void listaInOrderRec(Nodo nodo, UniversalHashTable aceptados,
+                             StringBuilder aceptadosSB, StringBuilder noAceptadosSB) {
+        if (nodo == null) return;
 
         // 1. Recorre subárbol Izquierdo
-        recorrerListaInOrder(nodo.izquierdo, aceptados, listaCompleta); 
+         listaInOrderRec(nodo.izquierdo, aceptados, aceptadosSB, noAceptadosSB);
 
         // 2. Procesa el Nodo Actual (Estudiante del AVL)
         Estudiante estudianteAVL = nodo.estudiante; 
@@ -345,17 +389,30 @@ private Nodo minValueNode(Nodo nodo) {
 
         if (estudianteEnHash != null) {
             // El estudiante está en la HashTable: Aceptado.
-            listaCompleta[0] += estudianteAVL.toString() + "\n";
+            aceptadosSB.append(estudianteAVL.toString()).append("\n");
         } else {
             // El estudiante NO está en la HashTable: No Aceptado.
-            listaCompleta[1] += estudianteAVL.toString() + "\n";
+            noAceptadosSB.append(estudianteAVL.toString()).append("\n");
         }
 
         // 3. Recorre subárbol Derecho
-        recorrerListaInOrder(nodo.derecho, aceptados, listaCompleta); 
+        listaInOrderRec(nodo.derecho, aceptados, aceptadosSB, noAceptadosSB); 
     }
 
+    public String listarPrioridad() {
+    StringBuilder sb = new StringBuilder();
+    listarPrioridadRec(raiz, sb);
+    return sb.toString();
+}
 
+private void listarPrioridadRec(Nodo nodo, StringBuilder sb) {
+    if (nodo == null) return;
+
+    // Inorder: Izquierdo - Actual - Derecho
+    listarPrioridadRec(nodo.izquierdo, sb);
+    sb.append(nodo.estudiante.toString()).append("\n");
+    listarPrioridadRec(nodo.derecho, sb);
 }
 
 
+}
