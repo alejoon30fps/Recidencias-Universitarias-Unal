@@ -1,4 +1,9 @@
+package Estructuras;
 public class Estudiante implements Comparable<Estudiante>,getAndStIdHeap<Estudiante>{
+    
+    private static long contadorIds = 0; // Contador estático para asignar IDs únicos
+    
+    
     private int pbm;
     private String nombre;
     private String correo;
@@ -6,9 +11,11 @@ public class Estudiante implements Comparable<Estudiante>,getAndStIdHeap<Estudia
     private int indexHeap;
 
     public Estudiante(String nombre, int pbm, String correo) {
+        this.id = ++contadorIds; // Asignar ID único autoincremental
         this.pbm = pbm;
         this.nombre = nombre;
         this.correo = correo;
+        this.indexHeap = -1; // Inicialmente no está en el heap
     }
 
     // GETTERS
@@ -55,6 +62,19 @@ public class Estudiante implements Comparable<Estudiante>,getAndStIdHeap<Estudia
     }
     @Override
     public int compareTo(Estudiante otro) {
-        return Integer.compare(this.pbm, otro.pbm);
+        int cmp = Integer.compare(this.pbm, otro.pbm);
+        if (cmp != 0) return cmp;
+        // Si los PBM son iguales, comparar por ID y el menor ID tiene mayor prioridad porque se inserto antes
+        return Long.compare(this.id, otro.id);
     }
+
+    @Override
+    public String toString() {
+        return "Estudiante{id=" + id + ", nombre='" + nombre + "', pbm=" + pbm + ", correo='" + correo + "'}";
+    }
+
+    public static void resetIDCounter() {
+        contadorIds = 0;
+    }
+
 }
