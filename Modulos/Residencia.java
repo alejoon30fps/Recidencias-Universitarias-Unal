@@ -8,20 +8,44 @@ public class Residencia {
 
     private AVLEstudiante ordenPrioridad;
     private MinHeap colaPrioridad;
-    private UniversalHashTable estudiantesPorID;
+    UniversalHashTable estudiantesPorID;
     private UniversalHashTable aceptados;
     private int cupos;
 
     public Residencia(){
         cupos=16; // cargo predeterminado de cupos
         ordenPrioridad= new AVLEstudiante();
-        colaPrioridad= new MinHeap<Estudiante>(cupos);
+        colaPrioridad= new MinHeap<Estudiante>(1000000);//capacidad grande inicial
         estudiantesPorID= new UniversalHashTable<Estudiante>();
         aceptados=new UniversalHashTable<Estudiante>();
         
     }
 
-    @SuppressWarnings("unchecked")
+    // Ingresar número de cupos disponibles
+    public void setCupos(int nuevoCupo){
+    if (nuevoCupo <= 0){
+        System.out.println("❌ El número de cupos debe ser mayor que 0.");
+        return;
+    }
+
+    this.cupos = nuevoCupo;
+
+    //// Reiniciar heap con nueva capacidad pero conservando los estudiantes actuales
+    //MinHeap<Estudiante> nuevoHeap = new MinHeap<>(nuevoCupo);
+//
+    //// Recargar todos los estudiantes existentes en el heap
+    //for (int i = 0; i < ordenPrioridad.totalNodos(); i++) {
+    //    // Este método lo agregamos más abajo (obtener lista del AVL)
+    //    Estudiante e = ordenPrioridad.getByIndexInOrder(i);
+    //    nuevoHeap.insert(e);
+    //}
+//
+    //this.colaPrioridad = nuevoHeap;
+
+    System.out.println("✔ Cupos actualizados a: " + nuevoCupo);
+}
+
+
     public void registrarEstudiante(String nombre, int pbm, String correo){
         Estudiante nuevoEstudiante=new Estudiante(nombre, pbm, correo);
         ordenPrioridad.insertar(nuevoEstudiante);
@@ -29,42 +53,66 @@ public class Residencia {
         estudiantesPorID.insert(nuevoEstudiante.getId(), nuevoEstudiante);
     }
 
-    public String queryEstudianteId(int id){
-        return estudiantesPorID.get(id).toString();
+    public String queryEstudianteId(long id){
+        Estudiante e = (Estudiante) estudiantesPorID.get(id);
+
+        if (e == null) return "No existe estudiante con ID " + id;
+        return e.toString();
     }
 
-    @SuppressWarnings("unchecked")
-    public void changeValue(int nuevoPbm,int idEstudiante){
+    public void changeValue(int nuevoPbm,long idEstudiante){
         Estudiante cambioEstudiante= (Estudiante) estudiantesPorID.get(idEstudiante);
+        if(cambioEstudiante==null) return;
+
         ordenPrioridad.changeKey(cambioEstudiante, nuevoPbm); //dentro de este metodo cambiamos el valor del pbm
         colaPrioridad.changeKey(cambioEstudiante, cambioEstudiante);//aqui simplemente actualizamos el mismo objeto pero con atributos modificados
+
+        cambioEstudiante.setPbm(nuevoPbm);
     }
 
-    @SuppressWarnings("unchecked")
     public void asigCupos(){
-        Estudiante cupo;
-        while(cupos!=0){
-            cupo=(Estudiante) colaPrioridad.extractMin();
-            aceptados.insert(cupo.getId(),cupo);
-            cupos--;
+        // Reiniciar la tabla de aceptados ya que se puede llamar varias veces y desde una sola puede cambiar todo
+        // o verse afectado por cambios previos
+        aceptados= new UniversalHashTable<Estudiante>();
+
+        //Reconstruir heap desde el AVL para asegurar consistencia
+        MinHeap<Estudiante> nuevoHeap = new MinHeap<>(ordenPrioridad.totalNodos());
+
+        for (int i = 0; i < ordenPrioridad.totalNodos(); i++) {
+            // Este método lo agregamos más abajo (obtener lista del AVL)
+            Estudiante e = ordenPrioridad.getByIndexInOrder(i);
+            nuevoHeap.insert(e);
+        }
+        colaPrioridad = nuevoHeap;
+
+        //Asignar cupos
+        int cuposRestantes = cupos;
+        while (cuposRestantes > 0 && !colaPrioridad.isEmpty()) {
+
+            Estudiante cupo = (Estudiante) colaPrioridad.extractMin();
+
+            // Si este estudiante ya fue aceptado (por si acaso), saltarlo
+            if (aceptados.get(cupo.getId()) != null) continue;
+
+            aceptados.insert(cupo.getId(), cupo);
+            cuposRestantes--;
         }
     }
 
     public String listaEntera(){
         String[]listaCompleta=ordenPrioridad.listaInOrder(aceptados);
-        return "***Estudiantes Admitidos***:\n"+listaCompleta[0]+"\n***Estudiantes no admitidos:\n***"+listaCompleta[1];
+        return "***Estudiantes Admitidos***:\n"+listaCompleta[0]+
+        "\n***Estudiantes no admitidos:\n***"+listaCompleta[1];
     }
 
-    public boolean estadoFinal(int idEstudiante){
-        if(aceptados.get(idEstudiante)==null) return false;  //Estos metodos tienen problemas cuando los objtos son ints en lugar de 0 jaja
-        return true;
+    public boolean estadoFinal(long idEstudiante){
+        return aceptados.get(idEstudiante) != null;
     }
 
     public boolean eliminarEstudiante(long id) {
 
         // 1. Buscar estudiante en la HashTable (acceso O(1))
-        int key = Long.valueOf(id).hashCode();
-        Estudiante estudiante = (Estudiante) estudiantesPorID.get(key);
+        Estudiante estudiante = (Estudiante) estudiantesPorID.get(id);
 
 
         if (estudiante == null) {
@@ -72,15 +120,34 @@ public class Residencia {
             return false;
         }
 
-        // 2. Eliminar del Heap
-        boolean heapOK = colaPrioridad.remove(estudiante);
+        // 2. Verificar si estaba en el HEAP y eliminarlo
+        boolean estaEnHeap = estudiante.getIndexHeap() != -1;
+        boolean heapOK = true;;
+        if (estaEnHeap) {
+            heapOK = colaPrioridad.remove(estudiante);
+        }
 
 
         // 3. Eliminar del AVL
-        boolean avlOK = ordenPrioridad.remove((Estudiante) estudiante);
+        boolean avlOK = ordenPrioridad.remove(estudiante);
 
         // 4. Eliminar de la tabla hash
+        aceptados.remove(id); // En caso de que esté, lo elimina sin problema
         boolean hashOK = estudiantesPorID.remove(id);
+
+        // 5. Verificar si fue aceptado antes de eliminar
+        aceptados.remove(id);
+        //// 6. Si fue aceptado, reasignar cupo
+         
+        //
+        //if (fueAceptado) {
+        //    aceptados.remove(id);
+//
+        //    System.out.println("Reasignando cupo tras eliminación de estudiante aceptado...");
+        //    cupos++; // Incrementar cupo temporalmente
+        //    asigCupos();
+        //    cupos--; // Devolver al valor original
+        //}
 
 
         System.out.println("\n--- RESULTADOS ELIMINACIÓN ---");
@@ -90,4 +157,12 @@ public class Residencia {
 
         return heapOK && avlOK && hashOK;
     }
+
+
+    public String listarEstudiantesPorPrioridad(){
+    return ordenPrioridad.listarPrioridad();
+}
+
+
+
 }
