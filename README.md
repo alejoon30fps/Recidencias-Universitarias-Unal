@@ -22,7 +22,8 @@ Para ejecutar el proyecto correctamente y realizar las pruebas de rendimiento, e
 
 ### 1. Clonar el repositorio
 ```bash
-git clone [https://github.com/alejoon30fps/Residencias-Universitarias-Unal.git](https://github.com/alejoon30fps/Residencias-Universitarias-Unal.git) ```
+git clone [https://github.com/alejoon30fps/Residencias-Universitarias-Unal.git](https://github.com/alejoon30fps/Residencias-Universitarias-Unal.git)
+```
 ##  Instrucciones de Ejecución
 
 ### 2. Iniciar la Aplicación (Modo Normal)
